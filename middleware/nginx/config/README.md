@@ -1,0 +1,29 @@
+## 設定値説明
+
+- worker_processes auto; - Nginx本体のプロセス数、autoにしてnginx内部判定に任せるのは賢明
+- worker_rlimit_nofile 100000; - workerプロセスが最大に開けるファイル数の制限。このように設定したら、ulimit -a以上のファイル数を処理できるようになり、too many open files問題を回避できる
+- worker_connections 2048; - 一つのworkerプロセグが開ける最大コネクション数
+- multi_accept on; - できるだけクライアントからのリクエストを受け取る
+- use epoll; - Linuxカーネル2.6以上の場合はepoll、BSDの場合kqueue
+- server_tokens off; - セキュリティ対策です、エラー画面のnginxバージョン番号を非表示
+- sendfile on; - ハードディスクio処理とsocket-io処理のバランスを取るため、onにしてください。
+- tcp_nopush on; - 一つのデータパッケージに全てのヘッダー情報を含まれる
+- tcp_nodelay on; - データをキャウッシュしないで、どんどん送信させる、リアルタイムアプリに最適
+- keepalive_timeout 10; - keep-aliveタイムアウト時間、少し短くしとく
+- client_header_timeout 10; - クライアントタイムアウト時間、少し短くしとく
+- client_body_timeout 10; - クライアントタイムアウト時間、少し短くしとく
+- reset_timedout_connection on; - 非アクティブクライアントのコネクションをクロースする
+- send_timeout 10; - クライアントへの送信タイムアウト
+- limit_conn_zone $binary_remote_addr zone=addr:5m; - 各種keyの共有メモリ設定
+- limit_conn addr 100; - keyの最大コネクション数、例：addrは100に設定する（一つのIPアドレスは100コネクションんをリクエストできる）
+- gzip on; - 転送内容をgzipで圧縮、推薦
+- gzip_http_version 1.0; - 圧縮httpバージョン
+- gzip_disable "msie6"; - ie6圧縮禁止
+- gzip_proxied any; - 全てのプロキシも圧縮
+- gzip_min_length 1024; - gzip 圧縮を行うデータの最小サイズです。これより小さいデータは圧縮されません。
+- gzip_comp_level 6; - 圧縮レベル設定、1-9
+- gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript application/javascript application/json; - 圧縮ファイルタイプ
+- open_file_cache max=100000 inactive=20s; - キャッシュをオープンする同時に最大数とキャッシュ時間も指定する、20秒以上の非アクティブファイルをクリアする
+- open_file_cache_valid 30s; - open_file_cacheの検知間隔時間をチェックする
+- open_file_cache_min_uses 2; - open_file_cacheの非アクティブファイルの最小ファイル数
+- open_file_cache_errors on; - ファイルのエラー情報もキャッシュする
