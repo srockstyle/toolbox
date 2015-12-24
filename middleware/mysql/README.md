@@ -39,11 +39,39 @@ Chefで使う場合
 
 ### MySQLの最新版をインストール
 
-### 一度だけSQLを実行する
+```chef
+bash 'add_mysql_community' do
+  user 'root'
+  code <<-EOC
+    rpm -ivh http://dev.mysql.com/get/mysql-community-release-el6-5.noarch.rpm
+  EOC
+  creates "/etc/yum.repos.d/mysql-community.repo"
+end
 
+
+%w{
+	mysql-community-client
+	mysql-community-devel
+	mysql-community-server
+}.each do |p|
+  yum_package p do
+    allow_downgrade node['mysql-libs']['downgrade']
+    arch node['mysql-libs']['arch']
+    provider node['mysql-libs']['provider']
+    version node['mysql-libs']['version']
+    action :install
+  end
+end
+
+template '/etc/my.cnf' do
+  source 'my.cnf.erb'
+end
+```
 
 
 ## チューニングについて
+
+適切なパラメータを設定するには。
 
 ### なるべくアプリの状況に応じて数値は変更
 
@@ -136,7 +164,8 @@ query_cache_type OFF
 
 ### チューニング計算式
 
-``sql
+数値は状況に応じて変更。
+
 ```計算SQL
 SELECT (
    /* グローバル */
