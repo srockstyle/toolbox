@@ -1,0 +1,22 @@
+group :development do
+  ## Railsのエラー画面をいい感じの内容に置き換える。
+  gem 'better_errors'
+  ## better-errorsのエラー画面でirbを利用する。
+  gem 'binding_of_caller'
+  ## irbのアクティブレコードの出力を見易い形式に整形する。
+  gem 'hirb'
+  ## hirbのUnicode対応版。日本語がずれない。
+  gem 'hirb-unicode'
+  ## ソースコードにブレークポイントを埋め込んで、所定のポイントでpryを起動する。
+  gem 'pry-byebug'
+  ## pryのドキュメントサポートを拡張する。RubyのC言語のソースコードを表示できる。
+  gem 'pry-doc'
+  ## rails consoleをirbからpryに置き換える。
+  gem 'pry-rails'
+  ##
+  gem 'pry-stack_explorer'
+  gem 'quiet_assets'
+  gem 'rack-mini-profiler'
+  gem 'tapp'
+  gem 'view_source_map'
+end
