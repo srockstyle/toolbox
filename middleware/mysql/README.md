@@ -35,6 +35,8 @@ grant select on `srockstyle_dev`.* to `srockstyle_select_user`@"192.168.0.7" ide
 
 ## Chefレシピ
 
+Chefで使う場合
+
 ### MySQLの最新版をインストール
 
 ### 一度だけSQLを実行する
@@ -47,40 +49,84 @@ grant select on `srockstyle_dev`.* to `srockstyle_select_user`@"192.168.0.7" ide
 
 左がデフォルトの値。
 
-#### 現状多すぎるので制限。
+現状多すぎるので制限。
+```my.cnf
 max_connection ? -> アプリで使う使用量
-#### 自動コミットはしないほうがよい
+```
+
+自動コミットはしないほうがよい
+```my.cnf
 autocommit  TRUE -> FALSE
-#### in系クエリを早くするのであれば増やす。
+```
+
+in系クエリを早くするのであれば増やす。
+```my.cnf
 eq_range_index_dive_limit   50
-#### 更新＆書き込みが多い場合は有効にする
+```
+
+更新＆書き込みが多い場合は有効にする
+```my.cnf
 innodb_adaptive_flushing  0 -> 1
 innodb_adaptive_flushing_lwm  0 -> 50
-#### RDSのみ:キャッシュウォーミングを有効。再起動後の高速化できる
+```
+
+RDSのみ:キャッシュウォーミングを有効。再起動後の高速化できる
+```my.cnf
 innodb_buffer_pool_dump_at_shutdown 0 -> 1
 innodb_buffer_pool_load_at_startup  0 -> 1
-#### スレッドをロックを待つ秒数。デフォルト50秒だが多い。
-innodb_lock_wait_timeout  50 -> 2
-#### 書き込みが走る回数を減らす。95%たまった時点で書き込み。
-innodb_max_dirty_pages_pct  75 -> 95
-#### インデックスを使わない検索のバッファ。きちんとインデックスされていればデフォルトでいい。
-read_buffer_size  26214 -> 26214
-#### インデックスが貼ってあるサイズ。
-read_rnd_buffer_size  52428 -> インデックスの量にもよる。
-#### 起動の遅いスレッドをみる。
-slow_launch_time    2 -> 1
-#### ソートするときのバッファサイズ
-sort_buffer_size  2097144 -> 2倍〜3倍
-#### インデックスを用いないjoinさせるときのバッファサイズ
-join_buffer_size 1048572 -> インデックスを用いるなら少なくていい。
-#### heapテーブル最大サイズ。メモリ量の割にすくない。二倍くらいにする。
-max_heap_table_size 16777216 -> 33554432
-#### tmpテーブル最大サイズ。これがないとMyISMに切り替わり遅くなるから増やす。max_heep_table_sizeと同じくらいにする。
-tmp_table_size 16777216 -> 33554432
-#### キャッシュするスレッド数。
-thread_cache_size 10 -> スレッド数と同じにする。
+```
 
-### 話し合って調節するか決めるやつ。
+スレッドをロックを待つ秒数。デフォルト50秒だが多い。
+```my.cnf
+innodb_lock_wait_timeout  50 -> 2
+```
+
+書き込みが走る回数を減らす。95%たまった時点で書き込み。
+```my.cnf
+innodb_max_dirty_pages_pct  75 -> 95
+```
+
+インデックスを使わない検索のバッファ。きちんとインデックスされていればデフォルトでいい。
+```my.cnf
+read_buffer_size  26214 -> 26214
+```
+
+インデックスが貼ってあるサイズ。
+```my.cnf
+read_rnd_buffer_size  52428 -> インデックスの量にもよる。
+```
+
+起動の遅いスレッドをみる。
+```my.cnf
+slow_launch_time    2 -> 1
+```
+
+ソートするときのバッファサイズ
+```my.cnf
+sort_buffer_size  2097144 -> 2倍〜3倍
+```
+
+インデックスを用いないjoinさせるときのバッファサイズ
+```my.cnf
+join_buffer_size 1048572 -> インデックスを用いるなら少なくていい。
+```
+
+heapテーブル最大サイズ。メモリ量の割にすくない。二倍くらいにする。
+```my.cnf
+max_heap_table_size 16777216 -> 33554432
+```
+
+tmpテーブル最大サイズ。これがないとMyISMに切り替わり遅くなるから増やす。max_heep_table_sizeと同じくらいにする。
+```my.cnf
+tmp_table_size 16777216 -> 33554432
+```
+
+キャッシュするスレッド数。
+```my.cnf
+thread_cache_size 10 -> スレッド数と同じにする。
+```
+
+話し合って調節するか決めるやつ。
 クエリキャッシュしないのであれば不要。
 
 ```my.cnf
