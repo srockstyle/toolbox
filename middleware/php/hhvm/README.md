@@ -2,7 +2,8 @@
 
 hhvmはFacebookが開発したPHPを高速で実行するミドルウェア。
 
- * http://hhvm.com/
+ * [公式サイト](http://hhvm.com/)
+ * [公式ドキュメント] (https://docs.hhvm.com/hhvm/)
 
 ## 対応PHP
 
