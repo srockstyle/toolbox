@@ -4,64 +4,78 @@
 # ここのラッパー
 # http://docs.aws.amazon.com/sdkforruby/api/Aws/EC2/Client.html#create_image-instance_method
 require "aws-sdk-ruby"
+require 'yaml'
 
-module SROCK_AWS_TOOLSET
-  module EC2
-    class CT
+config = YAML.load_file('deploy.yml')
+## 以下は必ず入力
+# デプロイしたインスタンスID
+# ELBのID
 
-      EC2CLI = Aws::EC2::Client.new(
-        access_key_id: creds['access_key_id'],
-        secret_access_key: creds['secret_access_key']
-      )
+deploy_instance_id = config[:ec2][:deploy_instance_id]
 
-      ## 無からインスタンスを作る
-      def create_instance(params)
-        EC2CLI.run_instances(
-          {
-            # テスト動作 trueかfalseで指定
-            dry_run: params[:dry_run],
-            # 起動させたい最小インスタンス。数字指定。
-            min_count: params[:min_count],
-            # 起動したい最大インスタンス。数字。
-            max_count: params[:max_count],
-            key_name: params[:key_name],
-            # セキュリティグループ名。配列か文字列で指定。
-            security_groups: params[:security_groups],
-            # セキュリティグループIDで指定する場合。配列と数字。これ上と合わせて使えるのかな。
-            security_group_ids: params[:security_group_ids],
-            user_data: params[:user_data],
-            instance_type: params[:instance_type],
-            placement: params[:placement],
-            ebs_optimized: true
-          }
-        )
-      end
+EC2CLI = Aws::EC2::Client.new(
+  access_key_id: creds['access_key_id'],
+  secret_access_key: creds['secret_access_key']
+)
 
-      ## 既存イメージのバックアップ
-      def backup_instance(params)
-        EC2CLI.create_image({
-          dry_run: params[:dry_run],
-          instance_id: params[:instance_id], # required
-          name: params[:name], # required
-          description: params[:description],
-          no_reboot: params[:no_reboot],
-          block_device_mappings: [
-            {
-              virtual_name: "String",
-              device_name: "String",
-              ebs: {
-                snapshot_id: "String",
-                volume_size: 1,
-                delete_on_termination: true,
-                volume_type: "standard", # accepts standard, io1, gp2
-                iops: 1,
-                encrypted: true,
-              },
-              no_device: "String",
-            },
-          ],
-        })
-      end
-    end
-  end
+## Amiからインスタンスを作る
+def create_instance(params)
+  EC2CLI.run_instances(
+    {
+      dry_run: false,
+      min_count: params[:max_count],
+      max_count: params[:max_count],
+      image_id: params[:ami_id],
+      security_groups: params[:security_groups],
+      instance_type: params[:instance_type],
+      ebs_optimized: true
+    }
+  )
 end
+
+## インスタンスのバックアップ
+def backup_instance(params)
+  resp = EC2CLI.create_image({
+    dry_run: false,
+    instance_id: params[:instance_id], # required
+    name: params[:name], # required
+    description: params[:description],
+    no_reboot: true,
+  })
+  return resp.image_id
+end
+
+## ELBについているEC2インスタンスの捜査
+def get_instances_list_by_elb(params)
+
+  resp = EC2CLI.describe_load_balancers({
+    load_balancer_names: params['elb_name'],
+    marker: "Marker",
+    page_size: 1,
+  })
+
+  return resp.load_balancer_descriptions[0].instances
+end
+
+# 手順
+intances = get_instances_list_by_elb(config[:elb])
+now = Time.now.strftime('%Y%m%d')
+
+## デプロイインスタンスのAMI作成
+## ami作成
+instance = {instance_id: deploy_instance_id , name: "prd#{now}", description: "Backup prd#{now}"}
+
+## インスタンス作成
+config[:ami_id] = backup_instance(instance)
+resp = create_instance(config)
+## 全部が疎通オッケーになるまで繰り返しチェック
+resp.instances.each do |instance|
+  ## 疎通確認するスクリプト
+  # OKならbreak
+  # ある程度まってもOKにならないならここでスクリプトは終了する
+end
+
+
+###  TODO
+## ELBから古いクラスタをはずす
+## ELBに新しいクラスタをひもづける
